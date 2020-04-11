@@ -17,7 +17,16 @@ const App: FC = ({ children }) => {
   // Render the Slate context.
   return (
     <Slate editor={editor} value={value} onChange={(value) => setValue(value)}>
-      <Editable />
+      <Editable
+        onKeyDown={(event) => {
+          if (event.key === "&") {
+            // Prevent the ampersand character from being inserted.
+            event.preventDefault();
+            // Execute the `insertText` method when the event occurs.
+            editor.insertText("and");
+          }
+        }}
+      />
     </Slate>
   );
 };
