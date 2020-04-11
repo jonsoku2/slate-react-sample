@@ -1,19 +1,18 @@
 // Import React dependencies.
 import React, { FC, useEffect, useCallback, useMemo, useState } from "react";
 // Import the Slate editor factory.
-import { createEditor, Transforms, Editor, Text } from "slate";
+import { createEditor, Transforms, Editor, Text, Node } from "slate";
 
 // Import the Slate components and React plugin.
 import { Slate, Editable, withReact } from "slate-react";
 
+// Import the `Node` helper interface from Slate.
+
 const App: FC = ({ children }) => {
   const editor = useMemo(() => withReact(createEditor()), []);
-  const [value, setValue] = useState<any[]>([
-    {
-      type: "paragraph",
-      children: [{ text: "A line of text in a paragraph." }],
-    },
-  ]);
+  const [value, setValue] = useState<any>(
+    deserialize(localStorage.getItem("content") || "") || ""
+  );
 
   // Define a rendering function based on the element passed to `props`. We use
   // `useCallback` here to memoize the function for subsequent renders.
@@ -33,7 +32,16 @@ const App: FC = ({ children }) => {
 
   // Render the Slate context.
   return (
-    <Slate editor={editor} value={value} onChange={(value) => setValue(value)}>
+    <Slate
+      editor={editor}
+      value={value}
+      onChange={(value: any) => {
+        console.log(value);
+        setValue(value);
+        const content = JSON.stringify(value);
+        localStorage.setItem("content", content);
+      }}
+    >
       <div>
         <button
           onMouseDown={(event) => {
@@ -142,4 +150,25 @@ const CustomEditor = {
       { match: (n) => Editor.isBlock(editor, n) }
     );
   },
+};
+
+// Define a serializing function that takes a value and returns a string.
+const serialize = (value: any) => {
+  return (
+    value
+      // Return the string content of each paragraph in the value's children.
+      .map((n: any) => Node.string(n))
+      // Join them all with line breaks denoting paragraphs.
+      .join("\n")
+  );
+};
+
+// Define a deserializing function that takes a string and returns a value.
+const deserialize = (string: string) => {
+  // Return a value array of children derived by splitting the string.
+  return string.split("\n").map((line: any) => {
+    return {
+      children: [{ text: line }],
+    };
+  });
 };
